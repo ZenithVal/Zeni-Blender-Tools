@@ -1,10 +1,13 @@
-# Zeni Blender Tools
+# Zeni's Blender Tools
 Zeni's blender tools. I didn't want a million split up tabs. 
 
 ## Transfer Shape Keys
 Uses Surface Deform to batch transfer all shapekeys from one mesh to another. Supports a mask on the target mesh and transferring to more than one selected mesh at a time.
 
-## TODO
+## Where Download?
+Click green `Code` button at the top of the page then select `Download ZIP` (Or just [click here](https://codeload.github.com/ZenithVal/Zeni-Blender-Tools/zip/refs/heads/main))
+
+## Plans
  - Port over various functions that I care for from [CATs](https://github.com/ZenithVal/cats-blender-plugin)
  - Low Poly subsurf generator for easy outfit fitting via mesh deform.
  - Think of more useful things.
