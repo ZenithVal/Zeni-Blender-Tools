@@ -3,7 +3,7 @@
 # Disabled for now, I don't really use top bar menus. Who does?
 
 # from . import TopBar
-# from . import ShapekeysMenu
+# from . import ShapeKeysMenu
 
 # classes = TopBar.classes
 

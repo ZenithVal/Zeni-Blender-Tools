@@ -1,8 +1,8 @@
 # operators/__init__.py
 
-from . import ShapekeyOps
+from . import ShapeKeysOps
 
 classes = (
-    ShapekeyOps.classes
+    ShapeKeysOps.classes
     #+ lorum ipsum.classes
 )

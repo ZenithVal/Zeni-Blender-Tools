@@ -21,12 +21,12 @@ import json
 import math
 import mathutils
 
-from .operators import ShapekeyOps
-from .panels import ShapekeysPanel
+from .operators import ShapeKeysOps
+from .panels import ShapeKeysPanel
 
 modules = [
-    ShapekeyOps,
-    ShapekeysPanel,
+    ShapeKeysOps,
+    ShapeKeysPanel,
 ]
 
 classes = (
@@ -40,7 +40,7 @@ def register():
         print(f"Registering {module.__name__}")
         module.register()
 
-    bpy.types.Scene.ZeniTools_Shapekeys_Props = bpy.props.PointerProperty(type=ShapekeyOps.Properties)
+    bpy.types.Scene.ZeniTools_ShapeKeys_Props = bpy.props.PointerProperty(type=ShapeKeysOps.Properties)
 
 def unregister():
     for cls in reversed(classes):
@@ -50,4 +50,4 @@ def unregister():
         print(f"Unregistering {module.__name__}")
         module.unregister()
 
-    del bpy.types.Scene.ZeniTools_Shapekeys_Props
+    del bpy.types.Scene.ZeniTools_ShapeKeys_Props

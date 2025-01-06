@@ -1,10 +1,10 @@
-#operators/ShapekeyOps.py
+#operators/ShapeKeysOps.py
 # Duin was here. If there is code to blame, it's Zeni's fault. 
 
 import bpy
 from bpy.types import Operator
 
-class ZeniTools_OP_BatchShapekeyTransfer(bpy.types.Operator):
+class ZeniTools_OP_BatchShapeKeyTransfer(bpy.types.Operator):
     bl_idname = "zenitools.batch_shape_key_transfer"
     bl_label = "Batch Shape Key Transfer"
     bl_description = "Transfers all Shape Keys from the source mesh to the selected mesh using surface deform."
@@ -16,7 +16,7 @@ class ZeniTools_OP_BatchShapekeyTransfer(bpy.types.Operator):
 
     def execute(self, context):
         props = context.scene
-        source_mesh = props.ZeniTools_Shapekeys_Source_Object
+        source_mesh = props.ZeniTools_ShapeKeys_Source_Object
         
         if source_mesh == None:
             self.report({'INFO'}, "No source mesh selected")
@@ -47,15 +47,15 @@ class ZeniTools_OP_BatchShapekeyTransfer(bpy.types.Operator):
                 bpy.context.view_layer.objects.active = target_mesh
                 
                 # Create a surface deform modifier
-                modifierName = "ZeniBatchShapekeyTransfer"
+                modifierName = "ZeniBatchShapeKeyTransfer"
                 target_mesh.select_set(True)
                 surf_def_mod = target_mesh.modifiers.new(name=modifierName, type='SURFACE_DEFORM')
 
                 # Define properties
                 surf_def_mod.target = source_mesh
-                if not props.ZeniTools_Shapekeys_ApplyToAllSelected and props.ZeniTools_Shapekeys_Vertex_Group != "":
-                    surf_def_mod.vertex_group = props.ZeniTools_Shapekeys_Vertex_Group
-                    if props.ZeniTools_Shapekeys_Vertex_Group_Invert:
+                if not props.ZeniTools_ShapeKeys_ApplyToAllSelected and props.ZeniTools_ShapeKeys_Vertex_Group != "":
+                    surf_def_mod.vertex_group = props.ZeniTools_ShapeKeys_Vertex_Group
+                    if props.ZeniTools_ShapeKeys_Vertex_Group_Invert:
                         surf_def_mod.invert_vertex_group = True
                 # Bind
                 bpy.ops.object.surfacedeform_bind(modifier=surf_def_mod.name)
@@ -86,33 +86,34 @@ class ZeniTools_OP_BatchShapekeyTransfer(bpy.types.Operator):
                 return {'CANCELLED'}
             
         endTextSkip = f" {shapekeySkips} shape keys were skipped." if shapekeySkips > 0 else ""
-        endTextMode = "selected meshes" if props.ZeniTools_Shapekeys_ApplyToAllSelected else target_meshes[0].name
+        endTextMode = "selected meshes" if props.ZeniTools_ShapeKeys_ApplyToAllSelected else target_meshes[0].name
         self.report({'INFO'},  f"Shape Keys transferred from {source_mesh.name} to {endTextMode}. {endTextSkip}")
         
         return {'FINISHED'}
 
-classes = [
-    ZeniTools_OP_BatchShapekeyTransfer,
-]
-
 class Properties(bpy.types.PropertyGroup):
-    bpy.types.Scene.ZeniTools_Shapekeys_Source_Object = bpy.props.PointerProperty(
+    bpy.types.Scene.ZeniTools_ShapeKeys_Source_Object = bpy.props.PointerProperty(
         name="Source Object",
         type=bpy.types.Object,
         description="Mesh with shapekeys you want trasnfered",
     )
-    bpy.types.Scene.ZeniTools_Shapekeys_Vertex_Group = bpy.props.StringProperty(
+    bpy.types.Scene.ZeniTools_ShapeKeys_Vertex_Group = bpy.props.StringProperty(
         name="Vertex Group Mask",
         description="Optional vertex Group mask for shapekey transfer. Ignored if applying to selected is enabled.",
     )
-    bpy.types.Scene.ZeniTools_Shapekeys_Vertex_Group_Invert = bpy.props.BoolProperty(
+    bpy.types.Scene.ZeniTools_ShapeKeys_Vertex_Group_Invert = bpy.props.BoolProperty(
         name="Invert Vertex Group",
         description="Invert the vertex group mask",
     )
-    bpy.types.Scene.ZeniTools_Shapekeys_ApplyToAllSelected = bpy.props.BoolProperty(
+    bpy.types.Scene.ZeniTools_ShapeKeys_ApplyToAllSelected = bpy.props.BoolProperty(
         name="Apply to all selected objects",
         description="Transfers the shapkeys from the source to all selected objects",
     )
+
+classes = [
+    ZeniTools_OP_BatchShapeKeyTransfer,
+    Properties,
+]
 
 def register():
     for cls in classes:
