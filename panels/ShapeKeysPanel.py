@@ -3,9 +3,9 @@
 import bpy
 from bpy.types import Panel
 
-class ZeniTools_PA_ShapeKeys(Panel):
+class ZeniTools_PT_ShapeKeys(Panel):
     bl_label = "Shape Keys"
-    bl_idname = "ZeniTools_PA_ShapeKeys"
+    bl_idname = "ZeniTools_PT_ShapeKeys"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = 'Zeni'
@@ -34,7 +34,7 @@ class ZeniTools_PA_ShapeKeys(Panel):
         row.operator("zenitools.batch_shape_key_transfer", text="Transfer ShapeKeys")
 
 classes = [
-    ZeniTools_PA_ShapeKeys,
+    ZeniTools_PT_ShapeKeys,
 ]
 
 def register():
