@@ -24,9 +24,15 @@ import mathutils
 from .operators import ShapeKeysOps
 from .panels import ShapeKeysPanel
 
+from .operators import ModelOps
+from .panels import ModelPanel
+
 modules = [
     ShapeKeysOps,
     ShapeKeysPanel,
+
+    ModelOps,
+    ModelPanel,
 ]
 
 classes = (
@@ -41,6 +47,7 @@ def register():
         module.register()
 
     bpy.types.Scene.ZeniTools_ShapeKeys_Props = bpy.props.PointerProperty(type=ShapeKeysOps.Properties)
+    # byp.types.Scene.ZeniTools_Model_Props = bpy.props.PointerProperty(type=ModelOps.Properties)
 
 def unregister():
     for cls in reversed(classes):
@@ -51,3 +58,4 @@ def unregister():
         module.unregister()
 
     del bpy.types.Scene.ZeniTools_ShapeKeys_Props
+    # del bpy.types.Scene.ZeniTools_Model_Props
