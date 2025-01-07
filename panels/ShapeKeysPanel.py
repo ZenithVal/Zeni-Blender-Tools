@@ -22,7 +22,10 @@ class ZeniTools_PA_ShapeKeys(Panel):
 
         row = box.row(align=True)
         row.label(text='Transfer Mask:')
-        row.prop_search(props, "ZeniTools_ShapeKeys_Vertex_Group", active_obj, "vertex_groups", text='')  
+        if not context.object:
+            row.prop(props, "ZeniTools_ShapeKeys_Vertex_Group", text="")
+        else:
+            row.prop_search(props, "ZeniTools_ShapeKeys_Vertex_Group", active_obj, "vertex_groups", text='')  
         row.prop (props, "ZeniTools_ShapeKeys_Vertex_Group_Invert",text="", toggle=True, icon='ARROW_LEFTRIGHT')
         row.enabled = not props.ZeniTools_ShapeKeys_ApplyToAllSelected
 
