@@ -15,18 +15,19 @@ class ZeniTools_PT_ShapeKeys(Panel):
         box = layout.box()
 
         box.label(text="Transfer Shape Keys")
-        active_obj = context.active_object
+        active_obj = context.object
         props = context.scene
 
         box.prop(props, "ZeniTools_ShapeKeys_Source_Object", text="Source")
 
         row = box.row(align=True)
         row.label(text='Transfer Mask:')
-        if not context.object:
-            row.prop(props, "ZeniTools_ShapeKeys_Vertex_Group", text="")
-        else:
+        if active_obj != None:
             row.prop_search(props, "ZeniTools_ShapeKeys_Vertex_Group", active_obj, "vertex_groups", text='')  
-        row.prop (props, "ZeniTools_ShapeKeys_Vertex_Group_Invert",text="", toggle=True, icon='ARROW_LEFTRIGHT')
+            row.prop (props, "ZeniTools_ShapeKeys_Vertex_Group_Invert",text="", toggle=True, icon='ARROW_LEFTRIGHT')
+        else:
+            row.label(text='No object selected')
+            row.enabled = False
         row.enabled = not props.ZeniTools_ShapeKeys_ApplyToAllSelected
 
         row = box.row(align=True)
