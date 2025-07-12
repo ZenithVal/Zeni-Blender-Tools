@@ -87,7 +87,6 @@ class ZeniTools_PT_Model(Panel):
             row.scale_y = 0.9
             row.operator(ModelOps.ZeniTools_OP_PoseMode_ApplyAsRestPose.bl_idname, icon='POSE_HLT')
 
-
 class ZeniTools_PT_ModelTools(Panel):
     bl_label = 'Model Tools'
     bl_idname = 'ZeniTools_PT_ModelTools'
@@ -96,32 +95,26 @@ class ZeniTools_PT_ModelTools(Panel):
     bl_category = 'Zeni'
 
     def draw(self, context):
-        layout = self.layout
-        box = layout.box()
-        button_height = 1
-
         props = context.scene
+        layout = self.layout
 
-        col = box.column(align=True)
-        row = layout_split(col, factor=0.33, align=True)
-        row.scale_y = button_height
-        row.label(text='Separate by:', icon='MESH_DATA')
-        row.operator(ModelOps.ZeniTools_OP_Mesh_SeparateByMaterials.bl_idname, text='Materials')
-        row.operator(ModelOps.ZeniTools_OP_Mesh_SeparateByLooseParts.bl_idname, text='Loose Parts')
-        row.operator(ModelOps.ZeniTools_OP_Mesh_CleanupShapekeys.bl_idname, text='ShapeKeys')
+        # Vertex Color Stuff
+        box = layout.box()
+        box.label(text="Vertex Color")
+        row = box.row(align=True)
+        row.prop(props, "ZeniTools_VertexColorToSet", text="Color To Set")
+        row = box.row(align=True)
+        row.operator("zenitools.mesh_set_vertex_color", text="Set Vertex Color")
+        row = box.row(align=True)
+        row.operator("zenitools.mesh_remove_vertex_color", text="Remove Vertex Color")
 
-        row = layout_split(col, factor=0.32, align=True)
-        row.scale_y = button_height
-        row.label(text='Join by:', icon='AUTOMERGE_ON')
-        row.operator(ModelOps.ZeniTools_OP_Mesh_JoinVisible.bl_idname, text='Visible')
-        row.operator(ModelOps.ZeniTools_OP_Mesh_JoinSelected.bl_idname, text='Selected')
-
-        row = layout_split(col, factor=0.32, align=True)
-        row.scale_y = button_height
-        row.label(text='Weights:', icon='BONE_DATA')
-        row.operator(ModelOps.ZeniTools_OP_Armature_MergeToActive.bl_idname, text='To Active')
-        row.operator(ModelOps.ZeniTools_OP_Armature_MergeToParent.bl_idname, text='To Parent')
-        
+        # Vertex Group Stuff
+        box = layout.box()
+        box.label(text="Vertex Groups")
+        row = box.row(align=True)
+        row.scale_y = 1.4
+        row.operator("zenitools.mesh_create_vertex_group_with_object_name", text="Add Vertex Group With Object Name")
+ 
 
 classes = [
     ZeniTools_PT_Model,

@@ -206,9 +206,103 @@ class ZeniTools_OP_Mesh_JoinSelected(bpy.types.Operator):
 
     def execute(self, context):
         return {'FINISHED'}
-    
-# Armature
 
+class ZeniTools_OP_Mesh_SetVertexColor(bpy.types.Operator):
+    bl_idname = "zenitools.mesh_set_vertex_color"
+    bl_label = "Set Vertex Color"
+    bl_description = "Sets the vertex color of the selected mesh(es)."
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    def execute(self, context):
+        props = context.scene
+        vertColor = props.ZeniTools_VertexColorToSet
+
+        target_meshes = []
+        for obj in bpy.context.selected_objects:
+            if isinstance(obj.data, bpy.types.Mesh):
+                target_meshes.append(obj)
+        if len(target_meshes) == 0:
+            self.report({'ERROR'},  "No mesh selected")
+            return {'CANCELLED'}
+        
+        for target_mesh in target_meshes:
+            if target_mesh is None:
+                self.report({'WARNING'},  "Target mesh cannot be null.")
+                continue
+            
+            # Ensure the mesh has a vertex color layer
+            if not target_mesh.data.vertex_colors:
+                target_mesh.data.vertex_colors.new(name="VertexColors")
+
+            # Set the vertex color
+            color_layer = target_mesh.data.vertex_colors.active
+            for poly in target_mesh.data.polygons:
+                for loop_index in poly.loop_indices:
+                    color_layer.data[loop_index].color = vertColor[:4]
+
+        return {'FINISHED'}
+
+
+class ZeniTools_OP_Mesh_RemoveVertexColor(bpy.types.Operator):
+    bl_idname = "zenitools.mesh_remove_vertex_color"
+    bl_label = "Remove Vertex Color"
+    bl_description = "Removes the vertex color attributes from the selected mesh(es)."
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    def execute(self, context):
+        target_meshes = []
+        for obj in bpy.context.selected_objects:
+            if isinstance(obj.data, bpy.types.Mesh):
+                target_meshes.append(obj)
+        if len(target_meshes) == 0:
+            self.report({'ERROR'},  "No mesh selected")
+            return {'CANCELLED'}
+        
+        for target_mesh in target_meshes:
+            if target_mesh is None:
+                self.report({'WARNING'},  "Target mesh cannot be null.")
+                continue
+            
+        for col_attr in obj.data.vertex_colors:
+            obj.data.vertex_colors.remove(col_attr)
+
+        return {'FINISHED'}
+
+
+class ZeniTools_OP_Mesh_CreateVertexGroupWithObjectName(bpy.types.Operator):
+    bl_idname = "zenitools.mesh_create_vertex_group_with_object_name"
+    bl_label = "Add Vertex Group with Object Name"
+    bl_description = "Adds a vertex group to the selected mesh(es) with the name of the object."
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    def execute(self, context):
+        target_meshes = []
+        for obj in bpy.context.selected_objects:
+            if isinstance(obj.data, bpy.types.Mesh):
+                target_meshes.append(obj)
+        if len(target_meshes) == 0:
+            self.report({'ERROR'},  "No mesh selected")
+            return {'CANCELLED'}
+        
+        for target_mesh in target_meshes:
+            if target_mesh is None:
+                self.report({'WARNING'},  "Target mesh cannot be null.")
+                continue
+            
+            # Create a vertex group with the name of the object
+            vertex_group_name = target_mesh.name
+            if vertex_group_name not in target_mesh.vertex_groups:
+                target_mesh.vertex_groups.new(name=vertex_group_name)
+                vertex_group = target_mesh.vertex_groups[vertex_group_name]
+                for vertex in target_mesh.data.vertices:
+                    vertex_group.add([vertex.index], 1.0, 'ADD')
+            else:
+                self.report({'WARNING'}, f"Vertex group '{vertex_group_name}' already exists.")
+
+        return {'FINISHED'}
+
+
+# Armature
 class ZeniTools_OP_Armature_MergeToActive(bpy.types.Operator):
     bl_idname = "zenitools.armature_merge_to_active"
     bl_label = "Merge Bones & Weights to Active"
@@ -265,9 +359,15 @@ class ZeniTools_OP_Global_ApplyTransformsSelected(bpy.types.Operator):
     def execute(self, context):
         return {'FINISHED'}
 
-
-# class Properties(bpy.types.PropertyGroup):
-
+class Properties(bpy.types.PropertyGroup):
+    bpy.types.Scene.ZeniTools_VertexColorToSet = bpy.props.FloatVectorProperty(
+                name = "Vertex Set Color Picker",
+                subtype = "COLOR",
+                size = 4,
+                min = 0.0,
+                max = 1.0,
+                default = (0.0,0.0,0.0,1.0)
+                )
 
 classes = [   
     ZeniTools_OP_ExportFBX,
@@ -295,9 +395,14 @@ classes = [
     ZeniTools_OP_Armature_MergeToParent,
 
     ZeniTools_OP_Global_ApplyTransformsVisible,
-    ZeniTools_OP_Global_ApplyTransformsSelected
+    ZeniTools_OP_Global_ApplyTransformsSelected,
 
-    # Properties
+    ZeniTools_OP_Mesh_SetVertexColor,
+    ZeniTools_OP_Mesh_RemoveVertexColor,
+
+    ZeniTools_OP_Mesh_CreateVertexGroupWithObjectName,
+
+    Properties,
 ]
 
 def register():
