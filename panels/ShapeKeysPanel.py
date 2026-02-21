@@ -31,6 +31,7 @@ class ZeniTools_PT_ShapeKeys(Panel):
         row.enabled = not props.ZeniTools_ShapeKeys_ApplyToAllSelected
 
         row = box.row(align=True)
+        row.prop(props, 'ZeniTools_ShapeKeys_AboveOtherModifiers', text='', icon='MODIFIER', invert_checkbox=True)
         row.prop(props, 'ZeniTools_ShapeKeys_ApplyToAllSelected', text='', icon='RESTRICT_SELECT_OFF')
         row.operator("zenitools.batch_shape_key_transfer", text="Transfer ShapeKeys")
 

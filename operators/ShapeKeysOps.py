@@ -51,6 +51,11 @@ class ZeniTools_OP_BatchShapeKeyTransfer(bpy.types.Operator):
                 target_mesh.select_set(True)
                 surf_def_mod = target_mesh.modifiers.new(name=modifierName, type='SURFACE_DEFORM')
 
+                # Move modifier above others
+                if not props.ZeniTools_ShapeKeys_AboveOtherModifiers:
+                    while surf_def_mod != target_mesh.modifiers[0]:
+                        bpy.ops.object.modifier_move_up(modifier=surf_def_mod.name)
+
                 # Define properties
                 surf_def_mod.target = source_mesh
                 if not props.ZeniTools_ShapeKeys_ApplyToAllSelected and props.ZeniTools_ShapeKeys_Vertex_Group != "":
@@ -104,6 +109,10 @@ class Properties(bpy.types.PropertyGroup):
     bpy.types.Scene.ZeniTools_ShapeKeys_Vertex_Group_Invert = bpy.props.BoolProperty(
         name="Invert Vertex Group",
         description="Invert the vertex group mask",
+    )
+    bpy.types.Scene.ZeniTools_ShapeKeys_AboveOtherModifiers = bpy.props.BoolProperty(
+        name="Above Other Modifiers",
+        description="Execute the surface deform modifier above modifiers. Avoids some invalid poly issues.",
     )
     bpy.types.Scene.ZeniTools_ShapeKeys_ApplyToAllSelected = bpy.props.BoolProperty(
         name="Apply to all selected objects",
