@@ -3,7 +3,7 @@
 bl_info = {
     "name": "Zeni's Blender Tools",
     "author": "ZenithVal",
-    "version": (1, 0, 0), 
+    "version": (1, 1, 0), 
     "blender": (4, 3, 2),
     "location": "View3D > Sidebar > Zeni",
     "description": "Misc Tools Zeni Uses",
