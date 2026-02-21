@@ -28,6 +28,9 @@
 # Edits by: GiveMeAllYourCats, Hotox
 
 import bpy
+import bmesh
+import math
+import mathutils
 from bpy.types import Panel
 
 def get_objects():
@@ -269,6 +272,193 @@ class ZeniTools_OP_Mesh_RemoveVertexColor(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# Python port of Blender's internal is_poly_convex_v2 C function. Returns False if the polygon is concave.
+def is_poly_convex_v2(face):
+
+    coords = [v.co for v in face.verts]
+    nr = len(coords)
+    
+    if nr < 3:
+        return False
+        
+    sign_flag = 0
+    normal = face.normal
+    
+    for a in range(nr):
+        v_prev2 = coords[a - 2]
+        v_prev1 = coords[a - 1]
+        v_curr = coords[a]
+        
+        dir_prev = v_prev1 - v_prev2
+        dir_curr = v_curr - v_prev1
+        
+        cross_scalar = dir_prev.cross(dir_curr).dot(normal)
+        
+        if cross_scalar < -1e-6:
+            sign_flag |= 1
+        elif cross_scalar > 1e-6:
+            sign_flag |= 2
+        if sign_flag == 3: 
+            return False 
+            
+    return True
+
+def is_face_concave_or_invalid(face):
+    coords = [v.co for v in face.verts]
+    nr = len(coords)
+    
+    if nr < 3:
+        return True
+        
+    if not is_poly_convex_v2(face):
+        return True 
+
+    # Edge Overlap/parallel check
+    prev_prev_co = coords[nr - 2]
+    prev_co = coords[nr - 1]
+    
+    prev_vec = prev_co - prev_prev_co
+    if prev_vec.length < 1e-6:
+        return True 
+    prev_vec.normalize()
+
+    for i in range(nr):
+        curr_co = coords[i]
+        curr_vec = curr_co - prev_co
+        
+        curr_len = curr_vec.length
+        if curr_len < 1e-6:
+            return True
+            
+        curr_vec.normalize()
+        if (curr_co - prev_prev_co).length_squared < 1e-12:
+            return True
+            
+        if 1.0 - prev_vec.dot(curr_vec) < 1e-6:
+            return True
+            
+        prev_prev_co = prev_co
+        prev_co = curr_co
+        prev_vec = curr_vec
+
+    # Degenerate Projection Check
+    centroid = sum(coords, mathutils.Vector()) / nr
+    normal = face.normal
+    
+    if normal.length < 1e-6:
+        return True # Face has zero area
+        
+    for j in range(nr):
+        v_prev = coords[j - 1]
+        v_curr = coords[j]
+        v_next = coords[(j + 1) % nr]
+        
+        # Calculate midpoints of adjacent edges
+        mid_prev = (v_prev + v_curr) / 2.0
+        mid_next = (v_curr + v_next) / 2.0
+        
+        # Vectors from centroid to midpoints, projected onto the face plane
+        vec_mid_prev = mid_prev - centroid
+        vec_mid_next = mid_next - centroid
+        vec_mid_prev -= vec_mid_prev.project(normal)
+        vec_mid_next -= vec_mid_next.project(normal)
+        
+        len_prev = vec_mid_prev.length
+        len_next = vec_mid_next.length
+        if len_prev < 1e-6 or len_next < 1e-6:
+            return True
+            
+        vec_mid_prev /= len_prev
+        vec_mid_next /= len_next
+        
+        # bpoly->scales[0] and [1] (Distance from centroid to the edges)
+        edge1_dir = v_curr - v_prev
+        len_edge1 = edge1_dir.length
+        if len_edge1 < 1e-6: return True
+        edge1_dir /= len_edge1
+        scale0 = (centroid - v_prev).cross(edge1_dir).length
+        
+        edge2_dir = v_next - v_curr
+        len_edge2 = edge2_dir.length
+        if len_edge2 < 1e-6: return True
+        edge2_dir /= len_edge2
+        scale1 = (centroid - v_curr).cross(edge2_dir).length
+        
+        if scale0 < 1e-6 or scale1 < 1e-6:
+            return True
+            
+        # bpoly->edgemid_angle (Angle between the two mid-vectors)
+        dot_val = max(-1.0, min(1.0, vec_mid_prev.dot(vec_mid_next)))
+        edgemid_angle = math.acos(dot_val)
+        
+        if edgemid_angle < 1e-6:
+            return True
+            
+        # bpoly->corner_edgemid_angles
+        vec_corner = v_curr - centroid
+        vec_corner -= vec_corner.project(normal)
+        len_corner = vec_corner.length
+        if len_corner < 1e-6:
+            return True
+        vec_corner /= len_corner
+        
+        dot_c0 = max(-1.0, min(1.0, vec_corner.dot(vec_mid_prev)))
+        dot_c1 = max(-1.0, min(1.0, vec_corner.dot(vec_mid_next)))
+        corner_angle_0 = math.acos(dot_c0)
+        corner_angle_1 = math.acos(dot_c1)
+        
+        if corner_angle_0 < 1e-6 or corner_angle_1 < 1e-6:
+            return True
+
+        # bpoly->scale_mid
+        area_tri = 0.5 * (v_curr - v_prev).cross(v_next - v_prev).length
+        base_len = (v_next - v_prev).length
+        if base_len < 1e-6:
+            return True
+        scale_mid = (area_tri / base_len) * 1.41421356 # sqrt(2)
+        if scale_mid < 1e-6:
+            return True
+    return False
+
+
+class ZeniTools_OP_MESH_SelectInvalidPolys(bpy.types.Operator):
+    bl_idname = "zenitools.mesh_select_invalid_polys"
+    bl_label = "Select Invalid Polygons"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'EDIT_MESH'
+
+    def execute(self, context):
+        obj = context.edit_object
+        me = obj.data
+        bm = bmesh.from_edit_mesh(me)
+
+        # Deselect all
+        for elem in bm.verts[:] + bm.edges[:] + bm.faces[:]:
+            elem.select = False
+
+        count = 0
+        for f in bm.faces:
+            if is_face_concave_or_invalid(f):
+                f.select = True
+                for v in f.verts:
+                    v.select = True
+                for e in f.edges:
+                    e.select = True
+                count += 1
+
+        bmesh.update_edit_mesh(me)
+        
+        if count > 0:
+            self.report({'INFO'}, f"Found {count} invalid polys.")
+        else:
+            self.report({'INFO'}, "No invalid polys.")
+            
+        return {'FINISHED'}
+
+
 class ZeniTools_OP_Mesh_CreateVertexGroupWithObjectName(bpy.types.Operator):
     bl_idname = "zenitools.mesh_create_vertex_group_with_object_name"
     bl_label = "Add Vertex Group with Object Name"
@@ -384,6 +574,8 @@ classes = [
     ZeniTools_OP_Mesh_SeperateByShapekeys,
     ZeniTools_OP_Mesh_JoinSelected,
     ZeniTools_OP_Mesh_JoinVisible,
+
+    ZeniTools_OP_MESH_SelectInvalidPolys,
 
     ZeniTools_OP_Mesh_CleanupMaterials,
     ZeniTools_OP_Mesh_CleanupShapekeys,
