@@ -107,6 +107,8 @@ class ZeniTools_PT_ModelTools(Panel):
         row.operator("zenitools.mesh_set_vertex_color", text="Set Vertex Color")
         row = box.row(align=True)
         row.operator("zenitools.mesh_remove_vertex_color", text="Remove Vertex Color")
+        row = box.row(align=True)
+        row.operator("zenitools.mesh_convert_to_byte_color", text="Convert To Byte Color")
 
         # Vertex Group Stuff
         box = layout.box()

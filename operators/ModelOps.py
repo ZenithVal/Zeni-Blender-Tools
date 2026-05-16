@@ -271,6 +271,56 @@ class ZeniTools_OP_Mesh_RemoveVertexColor(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class ZeniTools_OP_Mesh_ConvertToByteColor(bpy.types.Operator):
+    bl_idname = "zenitools.mesh_convert_to_byte_color"
+    bl_label = "Convert To Byte Color"
+    bl_description = "Converts vertex color attributes to byte color format."
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    def execute(self, context):
+        selected_meshes = [obj for obj in context.selected_objects if obj.type == 'MESH']
+        
+        if not selected_meshes:
+            self.report({'WARNING'}, "No mesh objects selected.")
+            return {'CANCELLED'}
+        
+        converted_count = 0
+        original_active = context.view_layer.objects.active
+        
+        for obj in selected_meshes:
+            mesh = obj.data
+            
+            if not mesh.color_attributes:
+                continue
+            
+            # Loop backwards through attributes so changing them doesn't break index ordering
+            for i in range(len(mesh.color_attributes) - 1, -1, -1):
+                attr = mesh.color_attributes[i]
+                
+                # 'FLOAT_COLOR' is the internal API name for "Color"
+                if attr.data_type == 'FLOAT_COLOR':
+                    # Force Blender to recognize this specific attribute as active
+                    mesh.color_attributes.active = attr
+                    
+                    # Target the object
+                    context.view_layer.objects.active = obj
+                    
+                    # Run the conversion
+                    bpy.ops.geometry.color_attribute_convert(
+                        domain=attr.domain, 
+                        data_type='BYTE_COLOR'
+                    )
+                    converted_count += 1
+
+        context.view_layer.objects.active = original_active
+
+        if converted_count > 0:
+            self.report({'INFO'}, f"Successfully converted {converted_count} color attribute layer(s).")
+        else:
+            self.report({'WARNING'}, "No float 'Color' attributes found to convert.")
+
+        return {'FINISHED'}
+          
 
 # Python port of Blender's internal is_poly_convex_v2 C function. Returns False if the polygon is concave.
 def is_poly_convex_v2(face):
@@ -591,6 +641,7 @@ classes = [
 
     ZeniTools_OP_Mesh_SetVertexColor,
     ZeniTools_OP_Mesh_RemoveVertexColor,
+    ZeniTools_OP_Mesh_ConvertToByteColor,
 
     ZeniTools_OP_Mesh_CreateVertexGroupWithObjectName,
 
