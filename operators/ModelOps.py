@@ -220,26 +220,31 @@ class ZeniTools_OP_Mesh_SetVertexColor(bpy.types.Operator):
         props = context.scene
         vertColor = props.ZeniTools_VertexColorToSet
 
-        target_meshes = []
-        for obj in bpy.context.selected_objects:
-            if isinstance(obj.data, bpy.types.Mesh):
-                target_meshes.append(obj)
-        if len(target_meshes) == 0:
-            self.report({'ERROR'},  "No mesh selected")
-            return {'CANCELLED'}
-        
-        for target_mesh in target_meshes:
-            if target_mesh is None:
-                self.report({'WARNING'},  "Target mesh cannot be null.")
-                continue
-            
-            # Ensure the mesh has a vertex color layer
-            if not target_mesh.data.vertex_colors:
-                target_mesh.data.vertex_colors.new(name="VertexColors")
+        target_objects = [
+            obj for obj in context.selected_objects
+            if obj.type == 'MESH'
+        ]
 
-            # Set the vertex color
-            color_layer = target_mesh.data.vertex_colors.active
-            for poly in target_mesh.data.polygons:
+        if not target_objects:
+            self.report({'ERROR'}, "No mesh selected")
+            return {'CANCELLED'}
+
+        for obj in target_objects:
+            mesh = obj.data
+
+            # Find an existing color attribute.
+            color_layer = mesh.color_attributes.get("VertexColors")
+
+            # Create one if it doesn't exist.
+            if color_layer is None:
+                color_layer = mesh.color_attributes.new(
+                    name="VertexColors",
+                    type='BYTE_COLOR',
+                    domain='CORNER'
+                )
+
+            # Set the color on every face corner.
+            for poly in mesh.polygons:
                 for loop_index in poly.loop_indices:
                     color_layer.data[loop_index].color = vertColor[:4]
 
